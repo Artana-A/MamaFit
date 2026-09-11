@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="pink_primary">#A6003F</color>
+    <color name="pink_accent">#E0357A</color>
+    <color name="pink_bg_light">#FDF1F4</color>
+    <color name="pink_card_light">#F7D9E2</color>
+    <color name="text_dark">#1C1C1E</color>
+    <color name="text_gray">#8E8E93</color>
+    <color name="white">#FFFFFF</color>
+    <color name="pink_input_bg">#FCE9EF</color>
+    <color name="pink_border_focus">#7B1450</color>
+    <color name="text_placeholder">#B0879A</color>
+    <color name="pink_card_border">#F5DCE6</color>
+    <color name="pink_light_bg">#FBD9E4</color>
+    <color name="pink_button_disabled">#F0AFC7</color>
+    <color name="progress_track">#F5D6E1</color>
+    <color name="green_status_bg">#DFF7E6</color>
+    <color name="green_status_text">#1C9A4B</color>
+    <color name="pink_banner_bg">#E23670</color>
+    <color name="pink_banner_button">#7B1450</color>
+    <color name="promo_gradient_start">#7B1450</color>
+    <color name="promo_gradient_end">#C2185B</color>
+    <color name="camera_box_bg">#2A1620</color>
+    <color name="green_reps_count">#2E7D32</color>
+</resources>

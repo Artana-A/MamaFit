@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MamaFit</string>
+    <string name="badge_title">Kesehatan Ibu</string>
+    <string name="badge_subtitle">Prioritas Utama</string>
+    <string name="heading_line1">Kehamilan Sehat,</string>
+    <string name="heading_line2">Mama Hebat.</string>
+    <string name="description">Pendamping setia perjalanan kehamilan Anda dengan panduan nutrisi, olahraga ringan, dan jurnal harian yang menenangkan.</string>
+    <string name="btn_start">Mulai Sekarang</string>
+    <string name="btn_login_phone">Masuk dengan Username</string>
+    <string name="already_have_account">Sudah punya akun? </string>
+    <string name="login_here">Masuk di sini</string>
+
+    <!-- Login -->
+    <string name="login_title">Selamat Datang Kembali</string>
+    <string name="login_subtitle">Masuk ke Akun Anda</string>
+    <string name="btn_login">Masuk</string>
+    <string name="no_account">Belum punya akun? Daftar di sini</string>
+
+    <!-- Login / Register -->
+    <string name="welcome_title_line1">Selamat Datang,</string>
+    <string name="welcome_title_line2">Mama</string>
+    <string name="welcome_desc">Mulai perjalanan sehatmu hari ini dengan bimbingan terbaik.</string>
+    <string name="label_name">Nama</string>
+    <string name="hint_name">Nama Lengkap</string>
+    <string name="label_username">Username</string>
+    <string name="hint_username">Contoh: mama_hebat</string>
+    <string name="label_phone">Nomor Handphone</string>
+    <string name="hint_phone">812 3456 7890</string>
+    <string name="label_email">Email</string>
+    <string name="hint_email">nama@email.com</string>
+    <string name="label_password">Password</string>
+    <string name="btn_continue">Lanjutkan</string>
+    <string name="helper_sms">Kami akan mengirimkan kode verifikasi melalui SMS.</string>
+    <string name="terms_prefix">Dengan mendaftar, Anda menyetujui </string>
+    <string name="terms_1">Ketentuan Layanan</string>
+    <string name="terms_and"> &amp; </string>
+    <string name="terms_2">Kebijakan Privasi</string>
+    <string name="terms_suffix"> kami.</string>
+
+    <!-- OTP -->
+    <string name="otp_title">Verifikasi Akun</string>
+    <string name="otp_desc">Silakan masukkan 6-digit kode verifikasi yang telah kami kirimkan ke email atau akun Anda.</string>
+    <string name="otp_resend_question">Belum menerima kode? </string>
+    <string name="otp_resend_action">Kirim Ulang Kode</string>
+    <string name="btn_verify">Verifikasi</string>
+    <string name="app_copyright">© 2024 MamaFit Indonesia</string>
+
+    <!-- Skrining -->
+    <string name="skrining_badge">Kesehatan Prioritas</string>
+    <string name="skrining_title">Skrining Kesehatan</string>
+    <string name="skrining_desc">Mari pastikan kondisi Bunda aman untuk berolahraga.</string>
+    <string name="skrining_info">Skrining ini membantu kami menyesuaikan intensitas latihan agar sesuai dengan kondisi fisik Bunda saat ini.</string>
+    <string name="btn_start_skrining">Mulai Skrining</string>
+    <string name="skrining_time_estimate">Estimasi waktu: 2–3 menit</string>
+
+    <!-- Beranda -->
+    <string name="banner_title">Waktunya Skrining Bulanan!</string>
+    <string name="banner_desc">Selesaikan skrining untuk tetap mengakses program olahraga Ibu.</string>
+    <string name="greeting_target">Target Harian</string>
+    <string name="progress_card_title">Tetap Semangat, Ma!</string>
+    <string name="btn_mulai_latihan">Mulai Latihan</string>
+    <string name="section_ringkasan">RINGKASAN MINGGU INI</string>
+    <string name="section_tips">TIPS HARI INI</string>
+    <string name="lihat_semua">Lihat Semua</string>
+
+    <!-- Olahraga -->
+    <string name="status_keamanan">STATUS KEAMANAN</string>
+    <string name="pilih_mode">PILIH MODE LATIHAN</string>
+    <string name="mode_aktif">Gerakan Aktif</string>
+    <string name="mode_ringan">Gerakan Ringan</string>
+    <string name="sesi_hari_ini">SESI HARI INI</string>
+    <string name="daftar_gerakan">Daftar Gerakan</string>
+    <string name="btn_mulai_sesi">Mulai Sesi</string>
+
+    <!-- Jurnal -->
+    <string name="laporan_minggu">Laporan Minggu Ini</string>
+    <string name="hari_aktif">HARI AKTIF</string>
+    <string name="mood_hari_ini">MOOD HARI INI</string>
+    <string name="kalender_konsistensi">KALENDER KONSISTENSI</string>
+    <string name="catatan_bidan">CATATAN BIDAN</string>
+    <string name="btn_kirim_suami">Kirim ke Suami</string>
+
+    <!-- Profil -->
+    <string name="settings_label">SETTINGS</string>
+    <string name="menu_akun">Akun</string>
+    <string name="menu_notifikasi">Notifikasi</string>
+    <string name="menu_bantuan">Bantuan</string>
+    <string name="menu_keluar">Keluar</string>
+    <string name="promo_title">Dapatkan MamaFit Pro</string>
+    <string name="promo_desc">Buka akses ke rencana olahraga personal dan panduan nutrisi untuk perjalanan kehamilan Anda</string>
+    <string name="btn_upgrade">Tingkatkan Sekarang</string>
+
+    <!-- Sesi Olahraga -->
+    <string name="sesi_subtitle">Demo kamera AI — koreksi gerakan angkat tangan</string>
+    <string name="camera_placeholder">Aktifkan kamera untuk mulai deteksi gerakan peregangan tangan secara real-time.</string>
+    <string name="btn_mulai_kamera">Mulai kamera</string>
+    <string name="reps_label">Gerakan benar tercapai: </string>
+    <string name="camera_disclaimer">Ini adalah prototipe untuk keperluan demo. Selalu konsultasikan dengan dokter atau bidan sebelum melakukan gerakan olahraga saat hamil.</string>
+
+    <!-- Skor Selesai -->
+    <string name="sesi_selesai_title">Sesi Selesai!</string>
+    <string name="sesi_selesai_desc">Ibu telah melangkah lebih dekat menuju kesehatan optimal hari ini.</string>
+    <string name="skor_akurasi_label">SKOR AKURASI</string>
+    <string name="skor_akurasi_desc">Postur Ibu sangat konsisten!</string>
+    <string name="feedback_ai_title">Feedback AI MamaFit</string>
+    <string name="btn_catat_mood">Catat Mood</string>
+    <string name="btn_selesai_sesi">Selesai</string>
+
+</resources>
