@@ -1,205 +1,220 @@
 package com.mamafit.app
+
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.util.Date
 
 // Enum
-/*
-enum class TipeAkun {
-    IBU_HAMIL,
-    BIDAN
-}
-*/
+@Serializable
 enum class Trimester {
     SATU,
     DUA,
     TIGA
 }
 
+@Serializable
 enum class TekananDarah {
     NORMAL,
     RENDAH,
     TINGGI
 }
 
+@Serializable
 enum class LetakPlasenta {
     NORMAL,
     PREVIA,
     TIDAK_TAHU
 }
 
+@Serializable
 enum class GerakanJanin {
     AKTIF,
     KURANG_AKTIF,
     BELUM_TERASA
 }
 
+@Serializable
 enum class LevelRisiko {
     RENDAH,
     SEDANG,
     TINGGI
 }
 
-enum class StatusValidasiBidan {
+@Serializable
+enum class StatusValidasi {
     MENUNGGU_VALIDASI,
     DISETUJUI,
     PERLU_PENYESUAIAN
 }
 
-enum class StatusSesiLatihan {
+@Serializable
+enum class StatusLatihan {
     BERLANGSUNG,
     SELESAI,
     DIHENTIKAN_KARENA_BAHAYA
 }
 
+@Serializable
 enum class ModeLatihan {
     GERAKAN_AKTIF,
-    GERAKAN_RINGAN // reframing aktivitas rumah / posisi duduk
+    GERAKAN_RINGAN
 }
 
 // Akun Pengguna [1]
+@Serializable
 @Entity(tableName = "pengguna")
 data class Pengguna(
-    @PrimaryKey val username: String,
+    @PrimaryKey val namaPengguna: String,
     val idPengguna: String,
-    val nama: String,
-    val noHp: String,
+    val namaLengkap: String,
+    val nomorTelepon: String,
     val email: String,
-    val password: String,
+    val kataSandi: String,
+    @Serializable(with = DateSerializer::class)
     val tanggalDaftar: Date
 )
 
-// Skrining Awal [2] Re-check bulanan [6-7]
+// Helper for Skrining
+@Serializable
 data class RiwayatKesehatan(
     val penyakitJantung: Boolean = false,
-    val letakPlasenta: LetakPlasenta,
-    // val hipertensi: Boolean = false,
-    // val diabetesGestasional: Boolean = false,
-    // val riwayatKeguguran: Boolean = false,
-    // val gangguanTiroid: Boolean = false,
-    // val riwayatOperasiKandungan: Boolean = false,
-    // val lainnya: String? = null
+    val letakPlasenta: LetakPlasenta = LetakPlasenta.NORMAL
 )
 
+@Serializable
 data class GejalaSaatIni(
-    // val sesakNapas: Boolean = false,
-    val tekananDarah: TekananDarah,
+    val tekananDarah: TekananDarah = TekananDarah.NORMAL,
     val pendarahan: Boolean = false,
     val nyeriPerutHebat: Boolean = false,
     val pusingBerat: Boolean = false,
-    // val kontraksiDini: Boolean = false,
-    val gerakanJanin: GerakanJanin,
-    val nyeriTulangKemaluan: Boolean,
-    val bertenaga: Boolean,
-    // val lainnya: String? = null
+    val gerakanJanin: GerakanJanin = GerakanJanin.AKTIF,
+    val nyeriTulangKemaluan: Boolean = false,
+    val bertenaga: Boolean = true
 )
 
-data class JawabanSkrining(
-    val trimester: Trimester,
-    val beratBadanKg: Float,
-    val riwayatKesehatan: RiwayatKesehatan,
-    val gejalaSaatIni: GejalaSaatIni
-)
-
+// Skrining Awal [2] Re-check bulanan [6-7]
+@Serializable
 data class HasilSkrining(
     val idSkrining: String,
     val idPengguna: String,
     val periodeBulan: String,
-    val jawaban: JawabanSkrining,
+    val trimester: Trimester,
+    val beratBadanKg: Float,
+    val riwayatKesehatan: RiwayatKesehatan,
+    val gejalaSaatIni: GejalaSaatIni,
     val levelRisikoSistem: LevelRisiko,
-    val isReCheckBulanan: Boolean,
+    val apakahPemeriksaanUlangBulanan: Boolean,
+    @Serializable(with = DateSerializer::class)
     val tanggalPengisian: Date
 )
 
 // Validasi Bidan [8-9]
+@Serializable
 data class ValidasiBidan(
     val idValidasi: String,
     val idSkrining: String,
     val idBidan: String,
-    val status: StatusValidasiBidan,
+    val statusValidasi: StatusValidasi,
     val levelRisikoFinal: LevelRisiko,
     val catatanPenyesuaian: String?,
+    @Serializable(with = DateSerializer::class)
     val tanggalValidasi: Date?
 )
 
 // Gerakan Senam
-sealed class Gerakan {
+@Serializable
+sealed class KatalogGerakan {
     abstract val idGerakan: String
-    abstract val nama: String
+    abstract val namaGerakan: String
     abstract val levelRisikoMinimal: LevelRisiko
 
+    @Serializable
     data class GerakanAktif(
         override val idGerakan: String,
-        override val nama: String,
+        override val namaGerakan: String,
         override val levelRisikoMinimal: LevelRisiko,
-        val trimesterCocok: List<Int>,
+        val daftarTrimesterCocok: List<Int>,
         val durasiMenit: Int,
-        val videoPanduanUrl: String
-    ) : Gerakan()
+        val tautanVideoPanduan: String
+    ) : KatalogGerakan()
 
+    @Serializable
     data class GerakanRingan(
         override val idGerakan: String,
-        override val nama: String,
+        override val namaGerakan: String,
         override val levelRisikoMinimal: LevelRisiko,
         val aktivitasRumahDasar: String,
         val targetDurasiMenit: Int
-    ) : Gerakan()
+    ) : KatalogGerakan()
 }
 
 // Sesi Latihan [10-13]
+@Serializable
 data class TandaBahaya(
-    val jenis: String,
+    val idTandaBahaya: String,
+    val idSesi: String,
+    val jenisTandaBahaya: String,
+    @Serializable(with = DateSerializer::class)
     val waktuTerdeteksi: Date
 )
 
+@Serializable
 data class SesiLatihan(
     val idSesi: String,
     val idPengguna: String,
     val idGerakan: String,
-    val mode: ModeLatihan,
-    val status: StatusSesiLatihan,
+    val modeLatihan: ModeLatihan,
+    val statusLatihan: StatusLatihan,
+    @Serializable(with = DateSerializer::class)
     val waktuMulai: Date,
+    @Serializable(with = DateSerializer::class)
     val waktuSelesai: Date?,
-    val tandaBahayaTerdeteksi: List<TandaBahaya> = emptyList()
-)
-
-// Hasil Sesi Latihan [14] dan Riwayat Aktifitas [15]
-data class HasilSesi(
-    val idSesi: String,
-    val kaloriTerbakar: Float,
-    val durasiMenit: Int,
-    val skorPostur: Int
-)
-
-data class RiwayatAktivitas(
-    val idPengguna: String,
-    val daftarSesi: List<HasilSesi>
+    val kaloriTerbakar: Float = 0f,
+    val durasiMenit: Int = 0,
+    val skorPostur: Int = 0,
+    val masukanKecerdasanBuatan: String? = null
 )
 
 // Lapran Mingguan [16]
+@Serializable
 data class LaporanMingguan(
     val idLaporan: String,
     val idPengguna: String,
     val mingguKe: String,
     val totalSesi: Int,
     val totalDurasiMenit: Int,
-    val rataRataSkorPostur: Float,
-    val ringkasanSkrining: HasilSkrining?
+    val rataRataSkorPostur: Float
 )
 
 // Fitur Tambahan
+@Serializable
 data class TipsKesehatan(
     val idTips: String,
-    val judul: String,
-    val isi: String,
+    val judulTips: String,
+    val isiTips: String,
     val relevanUntukTrimester: Int?,
     val relevanUntukLevelRisiko: LevelRisiko?
 )
 
+@Serializable
 data class PengingatLatihan(
     val idPengingat: String,
     val idPengguna: String,
-    val jadwalHari: List<String>,
+    val daftarJadwalHari: List<String>,
     val jamPengingat: String,
-    val aktif: Boolean
+    val apakahAktif: Boolean
 )
+
+// Serializer for Date
+object DateSerializer : KSerializer<Date> {
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Date", PrimitiveKind.LONG)
+    override fun serialize(encoder: Encoder, value: Date) = encoder.encodeLong(value.time)
+    override fun deserialize(decoder: Decoder): Date = Date(decoder.decodeLong())
+}

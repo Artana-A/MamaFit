@@ -26,8 +26,8 @@ class OlahragaFragment : Fragment(R.layout.fragment_olahraga) {
 
     private fun renderExerciseList(view: View, mode: ModeLatihan) {
         val exercises = WorkoutData.listGerakan.filter { 
-            if (mode == ModeLatihan.GERAKAN_AKTIF) it is Gerakan.GerakanAktif 
-            else it is Gerakan.GerakanRingan 
+            if (mode == ModeLatihan.GERAKAN_AKTIF) it is KatalogGerakan.GerakanAktif 
+            else it is KatalogGerakan.GerakanRingan 
         }
 
         val containers = listOf(
@@ -44,15 +44,15 @@ class OlahragaFragment : Fragment(R.layout.fragment_olahraga) {
             val card = containers[i]
             card.visibility = View.VISIBLE
             
-            card.findViewById<TextView>(R.id.tvExerciseTitle).text = item.nama
+            card.findViewById<TextView>(R.id.tvExerciseTitle).text = item.namaGerakan
             
             when (item) {
-                is Gerakan.GerakanAktif -> {
+                is KatalogGerakan.GerakanAktif -> {
                     card.findViewById<ImageView>(R.id.ivExerciseImage).setImageResource(R.drawable.img_exercise_1)
                     card.findViewById<TextView>(R.id.tvExerciseDuration).text = "${item.durasiMenit} Menit"
                     card.findViewById<TextView>(R.id.tvExerciseIntensity).text = item.levelRisikoMinimal.name
                 }
-                is Gerakan.GerakanRingan -> {
+                is KatalogGerakan.GerakanRingan -> {
                     card.findViewById<ImageView>(R.id.ivExerciseImage).setImageResource(R.drawable.ic_home)
                     card.findViewById<TextView>(R.id.tvExerciseDuration).text = "${item.targetDurasiMenit} Menit"
                     card.findViewById<TextView>(R.id.tvExerciseIntensity).text = "Reframing"
@@ -62,7 +62,7 @@ class OlahragaFragment : Fragment(R.layout.fragment_olahraga) {
             card.setOnClickListener {
                 val intent = Intent(requireContext(), SesiOlahragaActivity::class.java)
                 intent.putExtra("EXTRA_EXERCISE_ID", item.idGerakan)
-                intent.putExtra("EXTRA_EXERCISE_NAME", item.nama)
+                intent.putExtra("EXTRA_EXERCISE_NAME", item.namaGerakan)
                 startActivity(intent)
             }
         }

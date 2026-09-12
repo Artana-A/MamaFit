@@ -4,41 +4,41 @@ object WorkoutData {
     
     val listGerakan = listOf(
         // GERAKAN AKTIF (Trimester 2 - Resiko Rendah)
-        Gerakan.GerakanAktif(
+        KatalogGerakan.GerakanAktif(
             idGerakan = "GA01",
-            nama = "Panggul Miring (Pelvic Tilt)",
+            namaGerakan = "Panggul Miring (Pelvic Tilt)",
             levelRisikoMinimal = LevelRisiko.RENDAH,
-            trimesterCocok = listOf(1, 2, 3),
+            daftarTrimesterCocok = listOf(1, 2, 3),
             durasiMenit = 5,
-            videoPanduanUrl = "dummy_url_1"
+            tautanVideoPanduan = "dummy_url_1"
         ),
-        Gerakan.GerakanAktif(
+        KatalogGerakan.GerakanAktif(
             idGerakan = "GA02",
-            nama = "Squat Hamil Ringan",
+            namaGerakan = "Squat Hamil Ringan",
             levelRisikoMinimal = LevelRisiko.RENDAH,
-            trimesterCocok = listOf(2),
+            daftarTrimesterCocok = listOf(2),
             durasiMenit = 7,
-            videoPanduanUrl = "dummy_url_2"
+            tautanVideoPanduan = "dummy_url_2"
         ),
         
         // GERAKAN RINGAN / REFRAMING (Untuk Resiko Sedang / Aktivitas Rumah)
-        Gerakan.GerakanRingan(
+        KatalogGerakan.GerakanRingan(
             idGerakan = "GR01",
-            nama = "Posisi Duduk Ergonomis",
+            namaGerakan = "Posisi Duduk Ergonomis",
             levelRisikoMinimal = LevelRisiko.SEDANG,
             aktivitasRumahDasar = "Duduk saat bekerja atau bersantai",
             targetDurasiMenit = 10
         ),
-        Gerakan.GerakanRingan(
+        KatalogGerakan.GerakanRingan(
             idGerakan = "GR02",
-            nama = "Melipat Pakaian (Postur Tegak)",
+            namaGerakan = "Melipat Pakaian (Postur Tegak)",
             levelRisikoMinimal = LevelRisiko.SEDANG,
             aktivitasRumahDasar = "Aktivitas rumah tangga ringan",
             targetDurasiMenit = 15
         )
     )
 
-    fun getGerakanByRisiko(level: LevelRisiko): List<Gerakan> {
+    fun getGerakanByRisiko(level: LevelRisiko): List<KatalogGerakan> {
         return listGerakan.filter { it.levelRisikoMinimal <= level }
     }
 }

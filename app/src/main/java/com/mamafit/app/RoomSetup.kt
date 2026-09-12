@@ -1,5 +1,6 @@
 package com.mamafit.app
 import androidx.room.*
+import kotlinx.serialization.Serializable
 import java.util.Date
 
 // Converters
@@ -46,10 +47,10 @@ class Converters {
     fun toGerakanJanin(value: String?): GerakanJanin? = value?.let { GerakanJanin.valueOf(it) }
 
     @TypeConverter
-    fun fromStatusSesi(status: StatusSesiLatihan?): String? = status?.name
+    fun fromStatusLatihan(status: StatusLatihan?): String? = status?.name
 
     @TypeConverter
-    fun toStatusSesi(value: String?): StatusSesiLatihan? = value?.let { StatusSesiLatihan.valueOf(it) }
+    fun toStatusLatihan(value: String?): StatusLatihan? = value?.let { StatusLatihan.valueOf(it) }
 
     @TypeConverter
     fun fromModeLatihan(mode: ModeLatihan?): String? = mode?.name
@@ -59,6 +60,7 @@ class Converters {
 }
 
 // Entity
+@Serializable
 @Entity(tableName = "hasil_skrining")
 data class HasilSkriningEntity(
     @PrimaryKey val idSkrining: String,
@@ -74,24 +76,28 @@ data class HasilSkriningEntity(
     val gejalaSaatIni: GejalaSaatIni,
 
     val levelRisikoSistem: LevelRisiko,
-    val isReCheckBulanan: Boolean,
+    val apakahPemeriksaanUlangBulanan: Boolean,
+    @Serializable(with = DateSerializer::class)
     val tanggalPengisian: Date
 )
 
+@Serializable
 @Entity(tableName = "sesi_latihan")
 data class SesiLatihanEntity(
     @PrimaryKey val idSesi: String,
     val idPengguna: String,
     val idGerakan: String,
     val namaGerakan: String,
-    val mode: ModeLatihan,
-    val status: StatusSesiLatihan,
+    val modeLatihan: ModeLatihan,
+    val statusLatihan: StatusLatihan,
+    @Serializable(with = DateSerializer::class)
     val waktuMulai: Date,
+    @Serializable(with = DateSerializer::class)
     val waktuSelesai: Date?,
     val kaloriTerbakar: Float = 0f,
     val durasiMenit: Int = 0,
     val skorPostur: Int = 0,
-    val feedbackAi: String? = null
+    val masukanKecerdasanBuatan: String? = null
 )
 
 // Dao
@@ -128,17 +134,17 @@ interface UserDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: Pengguna)
 
-    @Query("SELECT * FROM pengguna WHERE username = :username LIMIT 1")
-    suspend fun getUserByUsername(username: String): Pengguna?
+    @Query("SELECT * FROM pengguna WHERE namaPengguna = :namaPengguna LIMIT 1")
+    suspend fun getUserByUsername(namaPengguna: String): Pengguna?
 
-    @Query("SELECT * FROM pengguna WHERE username = :username AND password = :password LIMIT 1")
-    suspend fun loginUser(username: String, password: String): Pengguna?
+    @Query("SELECT * FROM pengguna WHERE namaPengguna = :namaPengguna AND kataSandi = :kataSandi LIMIT 1")
+    suspend fun loginUser(namaPengguna: String, kataSandi: String): Pengguna?
 }
 
 // Database
 @Database(
     entities = [HasilSkriningEntity::class, SesiLatihanEntity::class, Pengguna::class],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

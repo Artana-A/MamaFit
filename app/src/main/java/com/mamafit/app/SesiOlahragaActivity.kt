@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
 import com.mamafit.app.databinding.ActivitySesiOlahragaBinding
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
@@ -132,7 +133,7 @@ class SesiOlahragaActivity : AppCompatActivity(), PoseDetectorHelper.DetectorLis
         // binding.tvRepsCount.text = repCount.toString()
         
         // Jika sudah mencapai target (misal 10), otomatis selesai
-        // if (repCount >= 10) finishSession(StatusSesiLatihan.SELESAI)
+        // if (repCount >= 10) finishSession(StatusLatihan.SELESAI)
     }
 
     override fun onError(error: String) {
@@ -147,19 +148,19 @@ class SesiOlahragaActivity : AppCompatActivity(), PoseDetectorHelper.DetectorLis
             .setTitle("Latihan Dihentikan")
             .setMessage("Bunda merasakan keluhan bahaya. Silakan beristirahat dan konsultasikan dengan bidan jika nyeri berlanjut.")
             .setPositiveButton("Hubungi Bidan") { _, _ ->
-                finishSession(StatusSesiLatihan.DIHENTIKAN_KARENA_BAHAYA)
+                finishSession(StatusLatihan.DIHENTIKAN_KARENA_BAHAYA)
                 val intent = Intent(Intent.ACTION_DIAL)
                 // intent.data = Uri.parse("tel:08123456789")
                 startActivity(intent)
             }
             .setNegativeButton("Istirahat") { _, _ ->
-                finishSession(StatusSesiLatihan.DIHENTIKAN_KARENA_BAHAYA)
+                finishSession(StatusLatihan.DIHENTIKAN_KARENA_BAHAYA)
             }
             .setCancelable(false)
             .show()
     }
 
-    private fun finishSession(status: StatusSesiLatihan) {
+    private fun finishSession(status: StatusLatihan) {
         val duration = ((System.currentTimeMillis() - startTime) / 60000).toInt()
         val kalori = duration * 5f
         val skor = if (isDangerStopped) 0 else 85
@@ -171,16 +172,23 @@ class SesiOlahragaActivity : AppCompatActivity(), PoseDetectorHelper.DetectorLis
                 idPengguna = "USER_123",
                 idGerakan = exerciseId,
                 namaGerakan = exerciseName,
-                mode = ModeLatihan.GERAKAN_AKTIF,
-                status = status,
+                modeLatihan = ModeLatihan.GERAKAN_AKTIF,
+                statusLatihan = status,
                 waktuMulai = Date(startTime),
                 waktuSelesai = Date(),
                 kaloriTerbakar = kalori,
                 durasiMenit = duration,
                 skorPostur = skor,
-                feedbackAi = if (isDangerStopped) "Latihan dihentikan demi keamanan." else "Latihan luar biasa, postur Bunda stabil!"
+                masukanKecerdasanBuatan = if (isDangerStopped) "Latihan dihentikan demi keamanan." else "Latihan luar biasa, postur Bunda stabil!"
             )
             db.sesiLatihanDao().simpanSesi(sesi)
+            
+            // Sync ke Supabase
+            try {
+                SupabaseManager.client.postgrest["sesi_latihan"].insert(sesi)
+            } catch (e: Exception) {
+                android.util.Log.e("MamaFit", "Supabase Sesi Sync Error: ${e.message}")
+            }
             
             val intent = Intent(this@SesiOlahragaActivity, SkorSelesaiActivity::class.java)
             intent.putExtra("EXTRA_SESI_ID", sesi.idSesi)

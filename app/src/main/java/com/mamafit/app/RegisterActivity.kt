@@ -14,6 +14,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
@@ -61,27 +64,39 @@ class RegisterActivity : AppCompatActivity() {
             }
 
             lifecycleScope.launch {
-                val db = MamaFitDatabase.getDatabase(this@RegisterActivity)
-                val existingUser = db.userDao().getUserByUsername(username)
+                try {
+                    val supabase = SupabaseManager.client
+                    
+                    // 1. Daftar ke Supabase Auth
+                    supabase.auth.signUpWith(Email) {
+                        this.email = email
+                        this.password = password
+                    }
 
-                if (existingUser != null) {
-                    Toast.makeText(this@RegisterActivity, "Username sudah terdaftar, silakan login", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
-                    finish()
-                } else {
-                    // Simpan user baru
+                    // 2. Ambil User ID dari Auth
+                    val authUser = supabase.auth.currentUserOrNull()
+                    if (authUser == null) {
+                        Toast.makeText(this@RegisterActivity, "Gagal mendaftarkan akun", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+
+                    // 3. Simpan profil tambahan ke tabel 'pengguna'
                     val newUser = Pengguna(
-                        username = username,
-                        idPengguna = UUID.randomUUID().toString(),
-                        nama = name,
-                        noHp = noHp,
+                        namaPengguna = username,
+                        idPengguna = authUser.id,
+                        namaLengkap = name,
+                        nomorTelepon = noHp,
                         email = email,
-                        password = password,
+                        kataSandi = password, // Tetap simpan lokal jika perlu, tapi Supabase Auth sudah handle
                         tanggalDaftar = Date()
                     )
+                    
+                    supabase.postgrest["pengguna"].insert(newUser)
+
+                    // 4. Simpan lokal di Room sebagai cache
+                    val db = MamaFitDatabase.getDatabase(this@RegisterActivity)
                     db.userDao().insertUser(newUser)
                     
-                    // Simpan session sementara agar OtpActivity tahu siapa yang sedang daftar
                     val prefs = getSharedPreferences("mamafit_prefs", MODE_PRIVATE)
                     prefs.edit().apply {
                         putString("temp_username", username)
@@ -90,6 +105,9 @@ class RegisterActivity : AppCompatActivity() {
 
                     Toast.makeText(this@RegisterActivity, "Pendaftaran berhasil!", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this@RegisterActivity, OtpActivity::class.java))
+                    finish()
+                } catch (e: Exception) {
+                    Toast.makeText(this@RegisterActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }

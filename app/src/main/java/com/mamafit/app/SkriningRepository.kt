@@ -1,5 +1,6 @@
 package com.mamafit.app
 
+import io.github.jan.supabase.postgrest.postgrest
 import java.util.Date
 import java.util.UUID
 
@@ -95,16 +96,20 @@ class SkriningRepository(private val dao: HasilSkriningDao) {
             riwayatKesehatan = riwayat,
             gejalaSaatIni = gejala,
             levelRisikoSistem = level,
-            isReCheckBulanan = false,
+            apakahPemeriksaanUlangBulanan = false,
             tanggalPengisian = Date()
         )
 
-        // Simpan ke database
+        // Simpan ke database Lokal
         dao.simpanSkrining(entity)
-        
-        // Simpan data trimester ke SharedPreferences agar tersinkronisasi dengan UI
-        // Catatan: context perlu dilewatkan ke repository atau menggunakan session manager terpisah
-        // Namun untuk kemudahan demo, kita asumsikan pemanggil akan menangani sinkronisasi UI
+
+        // Simpan ke Supabase Cloud
+        try {
+            val supabase = SupabaseManager.client
+            supabase.postgrest["hasil_skrining"].insert(entity)
+        } catch (e: Exception) {
+            android.util.Log.e("MamaFit", "Supabase Sync Error: ${e.message}")
+        }
         
         SkriningSession.reset() // Bersihkan sesi setelah berhasil simpan
         return level

@@ -42,7 +42,7 @@ class SkorSelesaiActivity : AppCompatActivity() {
                 binding.progressAkurasi.progress = it.skorPostur
                 binding.tvDuration.text = "${it.durasiMenit} mnt"
                 binding.tvCalories.text = "${it.kaloriTerbakar.toInt()} kkal"
-                binding.tvAiFeedback.text = it.feedbackAi
+                binding.tvAiFeedback.text = it.masukanKecerdasanBuatan
                 
                 // Jika ingin menampilkan total reps, tambahkan kolom di entity jika diperlukan
                 // binding.tvTotalReps.text = "10" 

@@ -7,6 +7,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
@@ -39,25 +42,43 @@ class LoginActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch {
-            val db = MamaFitDatabase.getDatabase(this@LoginActivity)
-            val user = db.userDao().loginUser(username, password)
-
-            if (user != null) {
-                // Simpan session
-                val prefs = getSharedPreferences("mamafit_prefs", MODE_PRIVATE)
-                prefs.edit().apply {
-                    putString("user_id", user.idPengguna)
-                    putString("user_name", user.nama)
-                    putString("user_username", user.username)
-                    putBoolean("is_logged_in", true)
-                    apply()
+            try {
+                val supabase = SupabaseManager.client
+                
+                // Login via Email (menggunakan field username sebagai email untuk demo ini, 
+                // atau Bunda bisa sesuaikan agar inputnya email)
+                // Asumsi: field etUsername di layout diisi Email
+                supabase.auth.signInWith(Email) {
+                    this.email = username
+                    this.password = password
                 }
 
-                Toast.makeText(this@LoginActivity, "Selamat datang, ${user.nama}!", Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this@LoginActivity, DashboardActivity::class.java))
-                finishAffinity() // Tutup semua activity sebelumnya
-            } else {
-                Toast.makeText(this@LoginActivity, "Username atau Password salah", Toast.LENGTH_SHORT).show()
+                val authUser = supabase.auth.currentUserOrNull()
+                if (authUser != null) {
+                    // Ambil detail profil dari tabel pengguna
+                    val profile = supabase.postgrest["pengguna"]
+                        .select {
+                            filter {
+                                eq("id_pengguna", authUser.id)
+                            }
+                        }.decodeSingle<Pengguna>()
+
+                    // Simpan session
+                    val prefs = getSharedPreferences("mamafit_prefs", MODE_PRIVATE)
+                    prefs.edit().apply {
+                        putString("user_id", profile.idPengguna)
+                        putString("user_name", profile.namaLengkap)
+                        putString("user_username", profile.namaPengguna)
+                        putBoolean("is_logged_in", true)
+                        apply()
+                    }
+
+                    Toast.makeText(this@LoginActivity, "Selamat datang, ${profile.namaLengkap}!", Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this@LoginActivity, DashboardActivity::class.java))
+                    finishAffinity()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@LoginActivity, "Login gagal: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
