@@ -19,6 +19,8 @@ import com.google.mediapipe.framework.image.BitmapImageBuilder
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult
 import com.mamafit.app.databinding.ActivitySesiOlahragaBinding
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
@@ -167,9 +169,12 @@ class SesiOlahragaActivity : AppCompatActivity(), PoseDetectorHelper.DetectorLis
 
         lifecycleScope.launch {
             val db = MamaFitDatabase.getDatabase(this@SesiOlahragaActivity)
+            val prefs = getSharedPreferences("mamafit_prefs", MODE_PRIVATE)
+            val userId = prefs.getString("user_id", "00000000-0000-0000-0000-000000000000") ?: "00000000-0000-0000-0000-000000000000"
+
             val sesi = SesiLatihanEntity(
                 idSesi = UUID.randomUUID().toString(),
-                idPengguna = "USER_123",
+                idPengguna = userId,
                 idGerakan = exerciseId,
                 namaGerakan = exerciseName,
                 modeLatihan = ModeLatihan.GERAKAN_AKTIF,
@@ -183,9 +188,23 @@ class SesiOlahragaActivity : AppCompatActivity(), PoseDetectorHelper.DetectorLis
             )
             db.sesiLatihanDao().simpanSesi(sesi)
             
-            // Sync ke Supabase
+            // Sync ke Supabase dengan buildJsonObject agar aman (lowercase enum & UUID format)
             try {
-                SupabaseManager.client.postgrest["sesi_latihan"].insert(sesi)
+                val supabaseSesi = buildJsonObject {
+                    put("id_sesi", sesi.idSesi)
+                    put("id_pengguna", sesi.idPengguna)
+                    put("id_gerakan", sesi.idGerakan)
+                    put("nama_gerakan", sesi.namaGerakan)
+                    put("mode_latihan", sesi.modeLatihan.name.lowercase())
+                    put("status_latihan", sesi.statusLatihan.name.lowercase())
+                    put("waktu_mulai", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", java.util.Locale.US).format(sesi.waktuMulai))
+                    put("waktu_selesai", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", java.util.Locale.US).format(sesi.waktuSelesai))
+                    put("kalori_terbakar", sesi.kaloriTerbakar)
+                    put("durasi_menit", sesi.durasiMenit)
+                    put("skor_postur", sesi.skorPostur)
+                    put("masukan_kecerdasan_buatan", sesi.masukanKecerdasanBuatan)
+                }
+                SupabaseManager.client.postgrest["sesi_latihan"].insert(supabaseSesi)
             } catch (e: Exception) {
                 android.util.Log.e("MamaFit", "Supabase Sesi Sync Error: ${e.message}")
             }

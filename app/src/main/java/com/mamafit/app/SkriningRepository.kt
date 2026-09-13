@@ -1,117 +1,139 @@
 package com.mamafit.app
 
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import java.util.Date
 import java.util.UUID
 
 class SkriningRepository(private val dao: HasilSkriningDao) {
 
-    // Singleton sederhana untuk menyimpan jawaban selama sesi tanya jawab berlangsung
     object SkriningSession {
-        private val jawaban = mutableMapOf<Int, String>()
+        private val jawaban = mutableMapOf<String, String>()
+        var type: SkriningType = SkriningType.AWAL
         
-        fun simpanJawaban(index: Int, optionId: String) {
-            jawaban[index] = optionId
+        fun simpanJawaban(questionId: String, value: String) {
+            jawaban[questionId] = value
         }
-
-        fun ambilSemuaJawaban(): Map<Int, String> = jawaban
-
+        fun ambilJawaban(questionId: String): String? = jawaban[questionId]
+        fun ambilSemuaJawaban(): Map<String, String> = jawaban
         fun reset() {
             jawaban.clear()
+            type = SkriningType.AWAL
         }
     }
 
-    /**
-     * Logika utama untuk menentukan LevelRisiko berdasarkan aturan medis sederhana
-     */
-    fun hitungLevelRisiko(jawaban: Map<Int, String>): LevelRisiko {
-        // 1. Cek Kategori TINGGI (Kondisi Bahaya)
-        val jantung = jawaban[1] == "ya"      // Q2
-        val pendarahan = jawaban[3] == "ya"   // Q4
-        val nyeriPerut = jawaban[4] == "ya"   // Q5
-        val pusing = jawaban[7] == "ya"       // Q8
+    fun hitungLevelRisiko(jawaban: Map<String, String>): LevelRisiko {
+        val hasAbsolut = jawaban["q4"] == "ya" || jawaban["q5"] == "ya" || jawaban["q6"] == "ya" || 
+                        jawaban["q7"] == "tinggi_baru" || jawaban["q8"] == "menutupi" || 
+                        (jawaban["q9"] != null && jawaban["q9"] != "tidak_ada" && jawaban["q9"] != "")
 
-        if (jantung || pendarahan || nyeriPerut || pusing) {
-            return LevelRisiko.TINGGI
+        val hasRelatif = jawaban["q10"] != null && jawaban["q10"] != "tidak_ada" && jawaban["q10"] != ""
+        val isRelatifTerkontrol = jawaban["q11"] == "terkontrol"
+
+        return when {
+            hasAbsolut || (hasRelatif && !isRelatifTerkontrol) -> LevelRisiko.TINGGI
+            hasRelatif && isRelatifTerkontrol -> LevelRisiko.SEDANG
+            else -> LevelRisiko.RENDAH
         }
-
-        // 2. Cek Kategori SEDANG (Kondisi Waspada)
-        val tekanan = jawaban[2]              // Q3: normal, rendah, tinggi
-        val plasenta = jawaban[5]             // Q6: normal, previa, tidak_tahu
-        val gerakan = jawaban[6]              // Q7: aktif, kurang_aktif, belum_terasa
-
-        if (tekanan != "normal" || plasenta == "previa" || gerakan == "kurang_aktif") {
-            return LevelRisiko.SEDANG
-        }
-
-        // 3. Default: RENDAH (Aman)
-        return LevelRisiko.RENDAH
     }
 
-    /**
-     * Menyimpan hasil akhir ke Database Room
-     */
     suspend fun simpanHasilSkrining(idPengguna: String): LevelRisiko {
         val jawabanMap = SkriningSession.ambilSemuaJawaban()
         val level = hitungLevelRisiko(jawabanMap)
         
-        // Mapping dari Map ID ke objek data class
         val riwayat = RiwayatKesehatan(
-            penyakitJantung = jawabanMap[1] == "ya",
-            letakPlasenta = when(jawabanMap[5]) {
-                "previa" -> LetakPlasenta.PREVIA
-                "tidak_tahu" -> LetakPlasenta.TIDAK_TAHU
-                else -> LetakPlasenta.NORMAL
+            jenisKehamilan = if (jawabanMap["q2"] == "kembar") JenisKehamilan.KEMBAR else JenisKehamilan.TUNGGAL,
+            riwayatPersalinan = when(jawabanMap["q3"]) {
+                "normal" -> RiwayatPersalinan.NORMAL
+                "caesar" -> RiwayatPersalinan.SESAR
+                else -> RiwayatPersalinan.BELUM_PERNAH
+            },
+            riwayatJantung = jawabanMap["q4"] == "ya",
+            penyakitParuBerat = jawabanMap["q5"] == "ya",
+            inkompetensiServiks = jawabanMap["q6"] == "ya",
+            letakPlasentaNormal = jawabanMap["q8"] == "normal",
+            usiaKehamilanPlasentaMenutupi = 0,
+            daftarKondisiRelatif = jawabanMap["q10"]?.split(";")?.filter { it.isNotEmpty() } ?: emptyList(),
+            apakahKondisiRelatifTerkontrol = jawabanMap["q11"] == "terkontrol",
+            bbSebelumHamil = when(jawabanMap["q12"]) {
+                "kurus" -> BbSebelumHamil.SANGAT_KURUS
+                "gemuk" -> BbSebelumHamil.GEMUK_OBESITAS
+                else -> BbSebelumHamil.NORMAL
+            },
+            frekuensiOlahragaSebelumHamil = when(jawabanMap["q13"]) {
+                "rutin" -> FrekuensiOlahraga.RUTIN
+                "jarang" -> FrekuensiOlahraga.JARANG
+                else -> FrekuensiOlahraga.TIDAK_PERNAH
             }
         )
 
         val gejala = GejalaSaatIni(
-            tekananDarah = when(jawabanMap[2]) {
-                "rendah" -> TekananDarah.RENDAH
-                "tinggi" -> TekananDarah.TINGGI
+            kondisiTekananDarah = when(jawabanMap["q7"]) {
+                "tinggi_baru" -> TekananDarah.HIPERTENSI_GESTASIONAL
+                "tinggi_lama" -> TekananDarah.KRONIS
                 else -> TekananDarah.NORMAL
             },
-            pendarahan = jawabanMap[3] == "ya",
-            nyeriPerutHebat = jawabanMap[4] == "ya",
-            pusingBerat = jawabanMap[7] == "ya",
-            gerakanJanin = when(jawabanMap[6]) {
-                "kurang_aktif" -> GerakanJanin.KURANG_AKTIF
-                "belum_terasa" -> GerakanJanin.BELUM_TERASA
-                else -> GerakanJanin.AKTIF
-            },
-            nyeriTulangKemaluan = jawabanMap[8] == "ya",
-            bertenaga = jawabanMap[9] == "sangat_siap" || jawabanMap[9] == "cukup"
+            gejalaMendesakBeberapaHariTerakhir = jawabanMap["q9"]?.split(";")?.filter { it.isNotEmpty() } ?: emptyList(),
+            gerakanJaninAktifHariIni = jawabanMap["q14"] == "aktif",
+            pusingPandanganKaburHariIni = jawabanMap["q15"] == "ya",
+            nyeriTulangKemaluanPunggungHebat = jawabanMap["q16"] == "ya",
+            cukupBertenagaHariIni = jawabanMap["q17"] == "sangat_siap" || jawabanMap["q17"] == "cukup"
         )
 
         val entity = HasilSkriningEntity(
             idSkrining = UUID.randomUUID().toString(),
             idPengguna = idPengguna,
-            periodeBulan = "Agustus 2026", // Bisa dibuat dinamis nantinya
-            trimester = when(jawabanMap[0]) {
+            skriningType = SkriningSession.type.name,
+            trimester = when(jawabanMap["q1"]) {
                 "t1" -> Trimester.SATU
                 "t2" -> Trimester.DUA
                 else -> Trimester.TIGA
             },
-            beratBadanKg = 0f, // Default karena belum ada input BB di skrining
             riwayatKesehatan = riwayat,
             gejalaSaatIni = gejala,
             levelRisikoSistem = level,
-            apakahPemeriksaanUlangBulanan = false,
             tanggalPengisian = Date()
         )
 
-        // Simpan ke database Lokal
         dao.simpanSkrining(entity)
 
-        // Simpan ke Supabase Cloud
         try {
-            val supabase = SupabaseManager.client
-            supabase.postgrest["hasil_skrining"].insert(entity)
+            // Gunakan buildJsonObject agar Supabase-kt bisa men-serialisasi data dengan benar
+            val supabaseData = buildJsonObject {
+                put("id_skrining", entity.idSkrining)
+                put("id_pengguna", entity.idPengguna)
+                put("skrining_type", entity.skriningType.lowercase()) // Kirim tipe skrining
+                put("trimester", when(entity.trimester) {
+                    Trimester.SATU -> "1"
+                    Trimester.DUA -> "2"
+                    Trimester.TIGA -> "3"
+                })
+                put("jenis_kehamilan", entity.riwayatKesehatan.jenisKehamilan.name.lowercase())
+                put("riwayat_persalinan", entity.riwayatKesehatan.riwayatPersalinan.name.lowercase())
+                put("riwayat_jantung", entity.riwayatKesehatan.riwayatJantung)
+                put("penyakit_paru_berat", entity.riwayatKesehatan.penyakitParuBerat)
+                put("inkompetensi_serviks", entity.riwayatKesehatan.inkompetensiServiks)
+                put("letak_plasenta_normal", entity.riwayatKesehatan.letakPlasentaNormal)
+                put("usia_kehamilan_plasenta_menutupi", entity.riwayatKesehatan.usiaKehamilanPlasentaMenutupi)
+                put("apakah_kondisi_relatif_terkontrol", entity.riwayatKesehatan.apakahKondisiRelatifTerkontrol)
+                put("bb_sebelum_hamil", entity.riwayatKesehatan.bbSebelumHamil.name.lowercase())
+                put("frekuensi_olahraga_sebelum_hamil", entity.riwayatKesehatan.frekuensiOlahragaSebelumHamil.name.lowercase())
+                put("kondisi_tekanan_darah", entity.gejalaSaatIni.kondisiTekananDarah.name.lowercase())
+                put("gerakan_janin_aktif_hari_ini", entity.gejalaSaatIni.gerakanJaninAktifHariIni)
+                put("pusing_pandangan_kabur_hari_ini", entity.gejalaSaatIni.pusingPandanganKaburHariIni)
+                put("nyeri_tulang_kemaluan_punggung_hebat", entity.gejalaSaatIni.nyeriTulangKemaluanPunggungHebat)
+                put("cukup_bertenaga_hari_ini", entity.gejalaSaatIni.cukupBertenagaHariIni)
+                put("level_risiko_sistem", entity.levelRisikoSistem.name.lowercase())
+                put("tanggal_pengisian", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", java.util.Locale.US).format(entity.tanggalPengisian))
+            }
+            
+            SupabaseManager.client.postgrest["hasil_skrining"].insert(supabaseData)
         } catch (e: Exception) {
             android.util.Log.e("MamaFit", "Supabase Sync Error: ${e.message}")
         }
         
-        SkriningSession.reset() // Bersihkan sesi setelah berhasil simpan
+        SkriningSession.reset()
         return level
     }
 }

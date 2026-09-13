@@ -3,6 +3,7 @@ package com.mamafit.app
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -11,210 +12,99 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import java.util.Date
 
-// Enum
 @Serializable
 enum class Trimester {
-    SATU,
-    DUA,
-    TIGA
+    @SerialName("1") SATU,
+    @SerialName("2") DUA,
+    @SerialName("3") TIGA
 }
 
 @Serializable
 enum class TekananDarah {
-    NORMAL,
-    RENDAH,
-    TINGGI
+    @SerialName("normal") NORMAL,
+    @SerialName("rendah") RENDAH,
+    @SerialName("tinggi") TINGGI,
+    @SerialName("hipertensi_gestasional") HIPERTENSI_GESTASIONAL,
+    @SerialName("kronis") KRONIS
 }
 
 @Serializable
-enum class LetakPlasenta {
-    NORMAL,
-    PREVIA,
-    TIDAK_TAHU
+enum class JenisKehamilan {
+    @SerialName("tunggal") TUNGGAL,
+    @SerialName("kembar") KEMBAR
 }
 
 @Serializable
-enum class GerakanJanin {
-    AKTIF,
-    KURANG_AKTIF,
-    BELUM_TERASA
+enum class RiwayatPersalinan {
+    @SerialName("normal") NORMAL,
+    @SerialName("sesar") SESAR,
+    @SerialName("belum_pernah") BELUM_PERNAH
+}
+
+@Serializable
+enum class BbSebelumHamil {
+    @SerialName("sangat_kurus") SANGAT_KURUS,
+    @SerialName("normal") NORMAL,
+    @SerialName("gemuk_obesitas") GEMUK_OBESITAS
+}
+
+@Serializable
+enum class FrekuensiOlahraga {
+    @SerialName("tidak_pernah") TIDAK_PERNAH,
+    @SerialName("jarang") JARANG,
+    @SerialName("rutin") RUTIN
 }
 
 @Serializable
 enum class LevelRisiko {
-    RENDAH,
-    SEDANG,
-    TINGGI
+    @SerialName("rendah") RENDAH,
+    @SerialName("sedang") SEDANG,
+    @SerialName("tinggi") TINGGI
 }
 
-@Serializable
-enum class StatusValidasi {
-    MENUNGGU_VALIDASI,
-    DISETUJUI,
-    PERLU_PENYESUAIAN
-}
-
-@Serializable
-enum class StatusLatihan {
-    BERLANGSUNG,
-    SELESAI,
-    DIHENTIKAN_KARENA_BAHAYA
-}
-
-@Serializable
-enum class ModeLatihan {
-    GERAKAN_AKTIF,
-    GERAKAN_RINGAN
-}
-
-// Akun Pengguna [1]
+// Akun Pengguna (Mapping ke Tabel SQL)
 @Serializable
 @Entity(tableName = "pengguna")
 data class Pengguna(
-    @PrimaryKey val namaPengguna: String,
-    val idPengguna: String,
-    val namaLengkap: String,
-    val nomorTelepon: String,
-    val email: String,
-    val kataSandi: String,
-    @Serializable(with = DateSerializer::class)
-    val tanggalDaftar: Date
+    @SerialName("nama_pengguna") @PrimaryKey val namaPengguna: String,
+    @SerialName("id_pengguna") val idPengguna: String,
+    @SerialName("nama_lengkap") val namaLengkap: String,
+    @SerialName("nomor_telepon") val nomorTelepon: String,
+    @SerialName("email") val email: String,
+    @SerialName("kata_sandi") val kataSandi: String,
+    @SerialName("tanggal_daftar") @Serializable(with = DateSerializer::class) val tanggalDaftar: Date
 )
 
-// Helper for Skrining
+// Struktur Data Skrining yang Flat (Sesuai SQL)
 @Serializable
 data class RiwayatKesehatan(
-    val penyakitJantung: Boolean = false,
-    val letakPlasenta: LetakPlasenta = LetakPlasenta.NORMAL
+    @SerialName("jenis_kehamilan") val jenisKehamilan: JenisKehamilan = JenisKehamilan.TUNGGAL,
+    @SerialName("riwayat_persalinan") val riwayatPersalinan: RiwayatPersalinan = RiwayatPersalinan.BELUM_PERNAH,
+    @SerialName("riwayat_jantung") val riwayatJantung: Boolean = false,
+    @SerialName("penyakit_paru_berat") val penyakitParuBerat: Boolean = false,
+    @SerialName("inkompetensi_serviks") val inkompetensiServiks: Boolean = false,
+    @SerialName("letak_plasenta_normal") val letakPlasentaNormal: Boolean = true,
+    @SerialName("usia_kehamilan_plasenta_menutupi") val usiaKehamilanPlasentaMenutupi: Int = 0,
+    @SerialName("daftar_kondisi_relatif") val daftarKondisiRelatif: List<String> = emptyList(),
+    @SerialName("apakah_kondisi_relatif_terkontrol") val apakahKondisiRelatifTerkontrol: Boolean = true,
+    @SerialName("bb_sebelum_hamil") val bbSebelumHamil: BbSebelumHamil = BbSebelumHamil.NORMAL,
+    @SerialName("frekuensi_olahraga_sebelum_hamil") val frekuensiOlahragaSebelumHamil: FrekuensiOlahraga = FrekuensiOlahraga.JARANG
 )
 
 @Serializable
 data class GejalaSaatIni(
-    val tekananDarah: TekananDarah = TekananDarah.NORMAL,
-    val pendarahan: Boolean = false,
-    val nyeriPerutHebat: Boolean = false,
-    val pusingBerat: Boolean = false,
-    val gerakanJanin: GerakanJanin = GerakanJanin.AKTIF,
-    val nyeriTulangKemaluan: Boolean = false,
-    val bertenaga: Boolean = true
+    @SerialName("kondisi_tekanan_darah") val kondisiTekananDarah: TekananDarah = TekananDarah.NORMAL,
+    @SerialName("gejala_mendesak_beberapa_hari_terakhir") val gejalaMendesakBeberapaHariTerakhir: List<String> = emptyList(),
+    @SerialName("gerakan_janin_aktif_hari_ini") val gerakanJaninAktifHariIni: Boolean = true,
+    @SerialName("pusing_pandangan_kabur_hari_ini") val pusingPandanganKaburHariIni: Boolean = false,
+    @SerialName("nyeri_tulang_kemaluan_punggung_hebat") val nyeriTulangKemaluanPunggungHebat: Boolean = false,
+    @SerialName("cukup_bertenaga_hari_ini") val cukupBertenagaHariIni: Boolean = true
 )
 
-// Skrining Awal [2] Re-check bulanan [6-7]
-@Serializable
-data class HasilSkrining(
-    val idSkrining: String,
-    val idPengguna: String,
-    val periodeBulan: String,
-    val trimester: Trimester,
-    val beratBadanKg: Float,
-    val riwayatKesehatan: RiwayatKesehatan,
-    val gejalaSaatIni: GejalaSaatIni,
-    val levelRisikoSistem: LevelRisiko,
-    val apakahPemeriksaanUlangBulanan: Boolean,
-    @Serializable(with = DateSerializer::class)
-    val tanggalPengisian: Date
-)
-
-// Validasi Bidan [8-9]
-@Serializable
-data class ValidasiBidan(
-    val idValidasi: String,
-    val idSkrining: String,
-    val idBidan: String,
-    val statusValidasi: StatusValidasi,
-    val levelRisikoFinal: LevelRisiko,
-    val catatanPenyesuaian: String?,
-    @Serializable(with = DateSerializer::class)
-    val tanggalValidasi: Date?
-)
-
-// Gerakan Senam
-@Serializable
-sealed class KatalogGerakan {
-    abstract val idGerakan: String
-    abstract val namaGerakan: String
-    abstract val levelRisikoMinimal: LevelRisiko
-
-    @Serializable
-    data class GerakanAktif(
-        override val idGerakan: String,
-        override val namaGerakan: String,
-        override val levelRisikoMinimal: LevelRisiko,
-        val daftarTrimesterCocok: List<Int>,
-        val durasiMenit: Int,
-        val tautanVideoPanduan: String
-    ) : KatalogGerakan()
-
-    @Serializable
-    data class GerakanRingan(
-        override val idGerakan: String,
-        override val namaGerakan: String,
-        override val levelRisikoMinimal: LevelRisiko,
-        val aktivitasRumahDasar: String,
-        val targetDurasiMenit: Int
-    ) : KatalogGerakan()
-}
-
-// Sesi Latihan [10-13]
-@Serializable
-data class TandaBahaya(
-    val idTandaBahaya: String,
-    val idSesi: String,
-    val jenisTandaBahaya: String,
-    @Serializable(with = DateSerializer::class)
-    val waktuTerdeteksi: Date
-)
-
-@Serializable
-data class SesiLatihan(
-    val idSesi: String,
-    val idPengguna: String,
-    val idGerakan: String,
-    val modeLatihan: ModeLatihan,
-    val statusLatihan: StatusLatihan,
-    @Serializable(with = DateSerializer::class)
-    val waktuMulai: Date,
-    @Serializable(with = DateSerializer::class)
-    val waktuSelesai: Date?,
-    val kaloriTerbakar: Float = 0f,
-    val durasiMenit: Int = 0,
-    val skorPostur: Int = 0,
-    val masukanKecerdasanBuatan: String? = null
-)
-
-// Lapran Mingguan [16]
-@Serializable
-data class LaporanMingguan(
-    val idLaporan: String,
-    val idPengguna: String,
-    val mingguKe: String,
-    val totalSesi: Int,
-    val totalDurasiMenit: Int,
-    val rataRataSkorPostur: Float
-)
-
-// Fitur Tambahan
-@Serializable
-data class TipsKesehatan(
-    val idTips: String,
-    val judulTips: String,
-    val isiTips: String,
-    val relevanUntukTrimester: Int?,
-    val relevanUntukLevelRisiko: LevelRisiko?
-)
-
-@Serializable
-data class PengingatLatihan(
-    val idPengingat: String,
-    val idPengguna: String,
-    val daftarJadwalHari: List<String>,
-    val jamPengingat: String,
-    val apakahAktif: Boolean
-)
-
-// Serializer for Date
+// Serializer ISO 8601 untuk Supabase
 object DateSerializer : KSerializer<Date> {
-    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Date", PrimitiveKind.LONG)
-    override fun serialize(encoder: Encoder, value: Date) = encoder.encodeLong(value.time)
-    override fun deserialize(decoder: Decoder): Date = Date(decoder.decodeLong())
+    private val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", java.util.Locale.US)
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Date", PrimitiveKind.STRING)
+    override fun serialize(encoder: Encoder, value: Date) = encoder.encodeString(format.format(value))
+    override fun deserialize(decoder: Decoder): Date = format.parse(decoder.decodeString()) ?: Date()
 }

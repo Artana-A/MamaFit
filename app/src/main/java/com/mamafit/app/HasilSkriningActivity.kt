@@ -122,20 +122,22 @@ class HasilSkriningActivity : AppCompatActivity() {
     private fun setupStatCards(level: LevelRisiko) {
         lifecycleScope.launch {
             val db = MamaFitDatabase.getDatabase(this@HasilSkriningActivity)
-            val latest = db.hasilSkriningDao().ambilSemuaSkrining("USER_123").firstOrNull()
+            val prefs = getSharedPreferences("mamafit_prefs", MODE_PRIVATE)
+            val userId = prefs.getString("user_id", "00000000-0000-0000-0000-000000000000") ?: "00000000-0000-0000-0000-000000000000"
+            val latest = db.hasilSkriningDao().ambilSemuaSkrining(userId).firstOrNull()
             
             if (latest != null) {
                 fillStat(R.id.statHeartRate, R.drawable.ic_monitor_heart, "Detak Jantung", "Normal")
                 fillStat(R.id.statTemp, R.drawable.ic_thermometer, "Suhu Tubuh", "36.5°C")
                 
-                val td = when(latest.gejalaSaatIni.tekananDarah) {
+                val td = when(latest.gejalaSaatIni.kondisiTekananDarah) {
                     TekananDarah.RENDAH -> "Rendah"
                     TekananDarah.TINGGI -> "Tinggi"
                     else -> "Normal"
                 }
                 fillStat(R.id.statBloodPressure, R.drawable.ic_favorite, "Tekanan Darah", td)
                 
-                val kesiapan = if (latest.gejalaSaatIni.bertenaga) "Optimal" else "Lelah"
+                val kesiapan = if (latest.gejalaSaatIni.cukupBertenagaHariIni) "Optimal" else "Lelah"
                 fillStat(R.id.statReadiness, R.drawable.ic_person, "Kesiapan", kesiapan)
             } else {
                 fillStat(R.id.statHeartRate, R.drawable.ic_monitor_heart, "Detak Jantung", "Normal")

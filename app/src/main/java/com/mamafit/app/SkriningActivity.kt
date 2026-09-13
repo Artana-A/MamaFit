@@ -14,6 +14,7 @@ class SkriningActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnStartSkrining).setOnClickListener {
             val intent = Intent(this, SkriningQuestionActivity::class.java)
             intent.putExtra(SkriningQuestionActivity.EXTRA_INDEX, 0)
+            intent.putExtra("EXTRA_TYPE", SkriningType.AWAL.name)
             startActivity(intent)
         }
     }

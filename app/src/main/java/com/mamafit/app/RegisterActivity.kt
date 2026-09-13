@@ -17,6 +17,8 @@ import androidx.lifecycle.lifecycleScope
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.UUID
@@ -74,43 +76,70 @@ class RegisterActivity : AppCompatActivity() {
                     }
 
                     // 2. Ambil User ID dari Auth
+                    // Jika "Confirm Email" ON di Supabase, authUser akan NULL karena belum ada session.
                     val authUser = supabase.auth.currentUserOrNull()
+                    
                     if (authUser == null) {
-                        Toast.makeText(this@RegisterActivity, "Gagal mendaftarkan akun", Toast.LENGTH_SHORT).show()
-                        return@launch
+                        // Cek apakah ini karena butuh konfirmasi email (fitur Supabase default)
+                        Toast.makeText(this@RegisterActivity, 
+                            "Silakan cek email Bunda untuk konfirmasi (atau matikan 'Confirm Email' di Supabase).", 
+                            Toast.LENGTH_LONG).show()
+                        
+                        // ID sementara untuk testing
+                        saveUserToDatabase(UUID.randomUUID().toString(), username, name, noHp, email, password)
+                    } else {
+                        saveUserToDatabase(authUser.id, username, name, noHp, email, password)
                     }
-
-                    // 3. Simpan profil tambahan ke tabel 'pengguna'
-                    val newUser = Pengguna(
-                        namaPengguna = username,
-                        idPengguna = authUser.id,
-                        namaLengkap = name,
-                        nomorTelepon = noHp,
-                        email = email,
-                        kataSandi = password, // Tetap simpan lokal jika perlu, tapi Supabase Auth sudah handle
-                        tanggalDaftar = Date()
-                    )
-                    
-                    supabase.postgrest["pengguna"].insert(newUser)
-
-                    // 4. Simpan lokal di Room sebagai cache
-                    val db = MamaFitDatabase.getDatabase(this@RegisterActivity)
-                    db.userDao().insertUser(newUser)
-                    
-                    val prefs = getSharedPreferences("mamafit_prefs", MODE_PRIVATE)
-                    prefs.edit().apply {
-                        putString("temp_username", username)
-                        apply()
-                    }
-
-                    Toast.makeText(this@RegisterActivity, "Pendaftaran berhasil!", Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this@RegisterActivity, OtpActivity::class.java))
-                    finish()
                 } catch (e: Exception) {
-                    Toast.makeText(this@RegisterActivity, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                    android.util.Log.e("MamaFit", "Register Error: ${e.message}", e)
+                    Toast.makeText(this@RegisterActivity, "Gagal: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
                 }
             }
         }
+    }
+
+    private suspend fun saveUserToDatabase(id: String, username: String, name: String, noHp: String, email: String, pass: String) {
+        val newUser = Pengguna(
+            namaPengguna = username,
+            idPengguna = id,
+            namaLengkap = name,
+            nomorTelepon = noHp,
+            email = email,
+            kataSandi = pass,
+            tanggalDaftar = Date()
+        )
+        
+        // Simpan ke Supabase Postgrest (opsional fail-safe)
+        try {
+            val userData = buildJsonObject {
+                put("id_pengguna", newUser.idPengguna)
+                put("nama_pengguna", newUser.namaPengguna)
+                put("nama_lengkap", newUser.namaLengkap)
+                put("nomor_telepon", newUser.nomorTelepon)
+                put("email", newUser.email)
+                put("kata_sandi", newUser.kataSandi)
+                put("tanggal_daftar", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", java.util.Locale.US).format(newUser.tanggalDaftar))
+            }
+            SupabaseManager.client.postgrest["pengguna"].insert(userData)
+        } catch (e: Exception) {
+            android.util.Log.e("MamaFit", "Supabase DB Error: ${e.message}")
+        }
+
+        // Simpan lokal di Room
+        val db = MamaFitDatabase.getDatabase(this@RegisterActivity)
+        db.userDao().insertUser(newUser)
+        
+        getSharedPreferences("mamafit_prefs", MODE_PRIVATE).edit().apply {
+            putString("user_id", id)
+            putString("user_name", name)
+            putString("user_username", username)
+            putBoolean("is_logged_in", true)
+            apply()
+        }
+        
+        Toast.makeText(this@RegisterActivity, "Pendaftaran berhasil!", Toast.LENGTH_SHORT).show()
+        startActivity(Intent(this@RegisterActivity, OtpActivity::class.java))
+        finish()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

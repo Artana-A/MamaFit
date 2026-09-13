@@ -17,6 +17,7 @@ class BerandaFragment : Fragment(R.layout.fragment_beranda) {
         view.findViewById<View>(R.id.btnMulaiSkrining).setOnClickListener {
             val intent = Intent(requireContext(), SkriningQuestionActivity::class.java)
             intent.putExtra(SkriningQuestionActivity.EXTRA_INDEX, 0)
+            intent.putExtra("EXTRA_TYPE", SkriningType.BULANAN.name)
             startActivity(intent)
         }
 

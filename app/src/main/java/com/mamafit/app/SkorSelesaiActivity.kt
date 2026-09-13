@@ -32,8 +32,10 @@ class SkorSelesaiActivity : AppCompatActivity() {
     private fun loadSessionData(id: String) {
         lifecycleScope.launch {
             val db = MamaFitDatabase.getDatabase(this@SkorSelesaiActivity)
+            val prefs = getSharedPreferences("mamafit_prefs", MODE_PRIVATE)
+            val userId = prefs.getString("user_id", "00000000-0000-0000-0000-000000000000") ?: "00000000-0000-0000-0000-000000000000"
             // Ambil data terbaru jika ID kosong, atau ambil berdasarkan ID
-            val allSesi = db.sesiLatihanDao().ambilRiwayatSesi("USER_123")
+            val allSesi = db.sesiLatihanDao().ambilRiwayatSesi(userId)
             val sesi = allSesi.find { it.idSesi == id } ?: allSesi.firstOrNull()
 
             sesi?.let {
