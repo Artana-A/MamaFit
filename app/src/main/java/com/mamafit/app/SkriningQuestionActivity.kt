@@ -170,7 +170,18 @@ class SkriningQuestionActivity : AppCompatActivity() {
                     val prefs = getSharedPreferences("mamafit_prefs", MODE_PRIVATE)
                     val userId = prefs.getString("user_id", "00000000-0000-0000-0000-000000000000") ?: "00000000-0000-0000-0000-000000000000"
                     
+                    // Ambil jawaban SEBELUM simpan agar tidak ter-reset
+                    val answers = SkriningRepository.SkriningSession.ambilSemuaJawaban()
+                    val trimester = when(answers["q1"]) {
+                        "t1" -> "1"
+                        "t2" -> "2"
+                        else -> "3"
+                    }
+                    
                     val level = repository.simpanHasilSkrining(userId)
+
+                    // Simpan trimester ke prefs sebagai fallback cepat
+                    prefs.edit().putString("user_trimester", trimester).apply()
                     
                     if (level == LevelRisiko.TINGGI) {
                         showHighRiskDialog()

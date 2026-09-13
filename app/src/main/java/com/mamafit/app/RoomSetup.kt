@@ -93,6 +93,19 @@ data class SesiLatihanEntity(
     val masukanKecerdasanBuatan: String
 )
 
+@Serializable
+@Entity(tableName = "laporan_mingguan")
+data class LaporanMingguanEntity(
+    @PrimaryKey val idLaporan: String,
+    val idPengguna: String,
+    val mingguKe: Int,
+    val totalDurasiOlahraga: Int,
+    val totalKaloriTerbakar: Float,
+    val statusRisikoDominan: LevelRisiko,
+    val catatanAi: String,
+    @Serializable(with = DateSerializer::class) val tanggalDibuat: Date
+)
+
 @Dao
 interface HasilSkriningDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -109,6 +122,24 @@ interface SesiLatihanDao {
 
     @Query("SELECT * FROM sesi_latihan WHERE idPengguna = :idPengguna ORDER BY waktuSelesai DESC")
     suspend fun ambilRiwayatSesi(idPengguna: String): List<SesiLatihanEntity>
+
+    @Query("SELECT SUM(durasiMenit) FROM sesi_latihan WHERE idPengguna = :idPengguna AND waktuSelesai >= :since")
+    suspend fun getTotalDurasiSince(idPengguna: String, since: Long): Int?
+
+    @Query("SELECT SUM(kaloriTerbakar) FROM sesi_latihan WHERE idPengguna = :idPengguna AND waktuSelesai >= :since")
+    suspend fun getTotalKaloriSince(idPengguna: String, since: Long): Float?
+    
+    @Query("SELECT COUNT(DISTINCT date(waktuSelesai/1000, 'unixepoch')) FROM sesi_latihan WHERE idPengguna = :idPengguna AND waktuSelesai >= :since")
+    suspend fun getCountHariAktifSince(idPengguna: String, since: Long): Int
+}
+
+@Dao
+interface LaporanMingguanDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun simpanLaporan(laporan: LaporanMingguanEntity)
+
+    @Query("SELECT * FROM laporan_mingguan WHERE idPengguna = :idPengguna ORDER BY tanggalDibuat DESC")
+    suspend fun ambilSemuaLaporan(idPengguna: String): List<LaporanMingguanEntity>
 }
 
 @Dao
@@ -120,18 +151,20 @@ interface UserDao {
     suspend fun getUserByUsername(namaPengguna: String): Pengguna?
 }
 
-@Database(entities = [HasilSkriningEntity::class, Pengguna::class, SesiLatihanEntity::class], version = 12, exportSchema = false)
+@Database(entities = [HasilSkriningEntity::class, Pengguna::class, SesiLatihanEntity::class, LaporanMingguanEntity::class], version = 14, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class MamaFitDatabase : RoomDatabase() {
     abstract fun hasilSkriningDao(): HasilSkriningDao
     abstract fun userDao(): UserDao
     abstract fun sesiLatihanDao(): SesiLatihanDao
+    abstract fun laporanMingguanDao(): LaporanMingguanDao
     
     companion object {
         @Volatile private var INSTANCE: MamaFitDatabase? = null
         fun getDatabase(context: android.content.Context): MamaFitDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(context.applicationContext, MamaFitDatabase::class.java, "mamafit_db_v10")
+                // Menggunakan nama file "mamafit_database" dan versi 14 untuk memastikan data bersih
+                val instance = Room.databaseBuilder(context.applicationContext, MamaFitDatabase::class.java, "mamafit_database")
                     .fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance

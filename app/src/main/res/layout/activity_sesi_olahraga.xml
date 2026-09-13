@@ -12,18 +12,34 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
-        android:paddingTop="32dp"
+        android:paddingTop="20dp"
         android:paddingBottom="24dp">
 
-        <TextView
-            android:id="@+id/tvExerciseName"
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/app_name"
-            android:textColor="@color/pink_primary"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:gravity="center"/>
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_gravity="start|center_vertical"
+                android:background="@drawable/bg_icon_circle_light"
+                android:src="@drawable/ic_arrow_back"
+                app:tint="@color/white"
+                android:contentDescription="Kembali"/>
+
+            <TextView
+                android:id="@+id/tvExerciseName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="@color/pink_primary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginHorizontal="48dp"/>
+        </FrameLayout>
 
         <TextView
             android:layout_width="match_parent"

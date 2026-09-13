@@ -61,6 +61,23 @@ class SesiOlahragaActivity : AppCompatActivity(), PoseDetectorHelper.DetectorLis
         binding.btnMulaiKamera.setOnClickListener {
             checkPermissionsAndStart()
         }
+
+        binding.btnBack.setOnClickListener {
+            onBackPressed()
+        }
+    }
+
+    override fun onBackPressed() {
+        AlertDialog.Builder(this)
+            .setTitle("Hentikan Latihan?")
+            .setMessage("Data latihan saat ini tidak akan tersimpan jika Bunda keluar sekarang.")
+            .setPositiveButton("Ya, Keluar") { _, _ ->
+                super.onBackPressed()
+            }
+            .setNegativeButton("Lanjutkan") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun showSafetyDialog() {

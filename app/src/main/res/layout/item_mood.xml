@@ -10,6 +10,6 @@
         android:layout_height="match_parent"
         android:gravity="center"
         android:textSize="20sp"
-        android:clickable="true"
-        android:focusable="true"/>
+        android:clickable="false"
+        android:focusable="false"/>
 </FrameLayout>

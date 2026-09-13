@@ -163,6 +163,7 @@
                         android:textStyle="bold"/>
 
                     <TextView
+                        android:id="@+id/tvProgressDesc"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
@@ -265,6 +266,7 @@
                         android:contentDescription="Kalori"/>
 
                     <TextView
+                        android:id="@+id/tvTotalKalori"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
@@ -298,6 +300,7 @@
                         android:contentDescription="Total Menit"/>
 
                     <TextView
+                        android:id="@+id/tvTotalMenit"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
@@ -350,6 +353,7 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/tvStreakCount"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Streak: 5 Hari"

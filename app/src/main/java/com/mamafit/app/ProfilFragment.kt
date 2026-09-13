@@ -10,6 +10,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 class ProfilFragment : Fragment(R.layout.fragment_profil) {
 
@@ -35,12 +37,31 @@ class ProfilFragment : Fragment(R.layout.fragment_profil) {
     private fun setupProfileData(view: View) {
         val prefs = requireContext().getSharedPreferences("mamafit_prefs", Context.MODE_PRIVATE)
         val fullName = prefs.getString("user_name", "Mama")
+        val userId = prefs.getString("user_id", "00000000-0000-0000-0000-000000000000") ?: "00000000-0000-0000-0000-000000000000"
+        
         view.findViewById<TextView>(R.id.tvProfileName).text = fullName
 
-        // Ambil data trimester dari SharedPreferences
-        val trimester = prefs.getString("user_trimester", "Satu")
-        val tvTrimester = view.findViewById<TextView>(R.id.tvTrimesterBadge)
-        tvTrimester.text = "Trimester $trimester"
+        lifecycleScope.launch {
+            try {
+                val db = MamaFitDatabase.getDatabase(requireContext())
+                val allSkrining = db.hasilSkriningDao().ambilSemuaSkrining(userId)
+                val latestSkrining = allSkrining.firstOrNull()
+                
+                val tvTrimester = view.findViewById<TextView>(R.id.tvTrimesterBadge)
+                if (latestSkrining != null) {
+                    val tri = when(latestSkrining.trimester) {
+                        Trimester.SATU -> "1"
+                        Trimester.DUA -> "2"
+                        Trimester.TIGA -> "3"
+                    }
+                    tvTrimester.text = "Trimester $tri"
+                } else {
+                    tvTrimester.text = "Belum Skrining"
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MamaFit", "Profil Data Error: ${e.message}")
+            }
+        }
     }
 
     private fun performLogout() {
