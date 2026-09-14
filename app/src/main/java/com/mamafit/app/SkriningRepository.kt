@@ -3,6 +3,8 @@ package com.mamafit.app
 import io.github.jan.supabase.postgrest.postgrest
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.add
 import java.util.Date
 import java.util.UUID
 
@@ -116,16 +118,22 @@ class SkriningRepository(private val dao: HasilSkriningDao) {
                 put("inkompetensi_serviks", entity.riwayatKesehatan.inkompetensiServiks)
                 put("letak_plasenta_normal", entity.riwayatKesehatan.letakPlasentaNormal)
                 put("usia_kehamilan_plasenta_menutupi", entity.riwayatKesehatan.usiaKehamilanPlasentaMenutupi)
+                putJsonArray("daftar_kondisi_relatif") {
+                    entity.riwayatKesehatan.daftarKondisiRelatif.forEach { add(it) }
+                }
                 put("apakah_kondisi_relatif_terkontrol", entity.riwayatKesehatan.apakahKondisiRelatifTerkontrol)
                 put("bb_sebelum_hamil", entity.riwayatKesehatan.bbSebelumHamil.name.lowercase())
                 put("frekuensi_olahraga_sebelum_hamil", entity.riwayatKesehatan.frekuensiOlahragaSebelumHamil.name.lowercase())
                 put("kondisi_tekanan_darah", entity.gejalaSaatIni.kondisiTekananDarah.name.lowercase())
+                putJsonArray("gejala_mendesak_beberapa_hari_terakhir") {
+                    entity.gejalaSaatIni.gejalaMendesakBeberapaHariTerakhir.forEach { add(it) }
+                }
                 put("gerakan_janin_aktif_hari_ini", entity.gejalaSaatIni.gerakanJaninAktifHariIni)
                 put("pusing_pandangan_kabur_hari_ini", entity.gejalaSaatIni.pusingPandanganKaburHariIni)
                 put("nyeri_tulang_kemaluan_punggung_hebat", entity.gejalaSaatIni.nyeriTulangKemaluanPunggungHebat)
                 put("cukup_bertenaga_hari_ini", entity.gejalaSaatIni.cukupBertenagaHariIni)
                 put("level_risiko_sistem", entity.levelRisikoSistem.name.lowercase())
-                put("tanggal_pengisian", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", java.util.Locale.US).format(entity.tanggalPengisian))
+                put("tanggal_pengisian", java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", java.util.Locale.US).format(entity.tanggalPengisian))
             }
             
             SupabaseManager.client.postgrest["hasil_skrining"].insert(supabaseData)

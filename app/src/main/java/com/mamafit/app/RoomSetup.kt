@@ -151,7 +151,7 @@ interface UserDao {
     suspend fun getUserByUsername(namaPengguna: String): Pengguna?
 }
 
-@Database(entities = [HasilSkriningEntity::class, Pengguna::class, SesiLatihanEntity::class, LaporanMingguanEntity::class], version = 14, exportSchema = false)
+@Database(entities = [HasilSkriningEntity::class, Pengguna::class, SesiLatihanEntity::class, LaporanMingguanEntity::class], version = 16, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class MamaFitDatabase : RoomDatabase() {
     abstract fun hasilSkriningDao(): HasilSkriningDao
